@@ -1,10 +1,10 @@
 /*
- * Rat Trap Sensor Receiver
+   Rat Trap Sensor Receiver
     Lo-Ra enabled rat trap sensor.
     Designed for a Arduino Pro Mini (3.3V, 8Mhz) attached to
     Lo-Ra radio via SPI.
-    Receives a signal from the sensor on the rat trap when the trap is 
-    triggered. 
+    Receives a signal from the sensor on the rat trap when the trap is
+    triggered.
 
     Pin Assignments:
      3 -> LoRa DOI0
@@ -15,11 +15,11 @@
     12 -> LoRa MOSI
     13 -> LoRa SCK
 
-  
+
 
     Quentin McDonald
     July 2018
- */
+*/
 
 #include <SoftwareSerial.h>
 #include <SPI.h>
@@ -61,41 +61,35 @@ bool send_string( const String& str)
 
 }
 
+// Configure the LoRa radio
+void setupLoRa() {
 
-
-void setup()
-{
-  
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
 
-soft_serial.begin(9600);
-  
-
-  while (!Serial);
-  Serial.begin(9600);
-  delay(500);
-
-  Serial.println("Arduino LoRa RX Test!");
+  Serial.println("Initializing LoRa radio");
 
   // manual reset
   digitalWrite(RFM95_RST, LOW);
-  delay(400);
+  delay(10);
   digitalWrite(RFM95_RST, HIGH);
-  delay(400);
+  delay(10);
 
   while (!rf95.init()) {
     Serial.println("LoRa radio init failed");
     while (1);
   }
-  Serial.println("LoRa radio init OK!");
+
+  Serial.println("LoRa radio init OK");
 
   // Defaults after init are 434.0MHz, modulation GFSK_Rb250Fd250, +13dbM
   if (!rf95.setFrequency(RF95_FREQ)) {
     Serial.println("setFrequency failed");
     while (1);
   }
+
   Serial.print("Set Freq to: "); Serial.println(RF95_FREQ);
+
 
   // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
 
@@ -104,15 +98,30 @@ soft_serial.begin(9600);
   // you can set transmitter powers from 5 to 23 dBm:
   rf95.setTxPower(23, false);
 
-// Set to slow speed for longer range
-rf95.setModemConfig(RH_RF95::Bw31_25Cr48Sf512);
+  // Set to slow speed for longer range
+  rf95.setModemConfig(RH_RF95::Bw31_25Cr48Sf512);
+}
 
+void setup()
+{
+
+  pinMode(RFM95_RST, OUTPUT);
+  digitalWrite(RFM95_RST, HIGH);
+
+  soft_serial.begin(9600);
+
+
+  while (!Serial);
+  Serial.begin(9600);
+  delay(500);
+
+  setupLoRa();
 
 }
 
 void loop()
 {
-  
+
   if (rf95.available())
   {
     // Should be a message for us now
@@ -138,12 +147,12 @@ void loop()
       send_string( buf );
 
 
-      
-    }else {
+
+    } else {
       Serial.println("Receive failed");
     }
 
 
-    
+
   }
 }
