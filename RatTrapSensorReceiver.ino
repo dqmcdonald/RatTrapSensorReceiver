@@ -21,6 +21,7 @@
     July 2018
 */
 
+#include <stdlib.h>
 #include <SoftwareSerial.h>
 #include <SPI.h>
 #include <RH_RF95.h>
@@ -135,17 +136,36 @@ void loop()
       Serial.print("Got: ");
       Serial.println((char*)buf);
       Serial.print("RSSI: ");
-      Serial.println(rf95.lastRssi(), DEC);
+      float rssi = rf95.lastRssi();
+      Serial.println(rssi, DEC);
 
-      // Send a reply
-      uint8_t data[] = "OK";
-      rf95.send(data, sizeof(data));
-      rf95.waitPacketSent();
-      Serial.println("Sent a reply");
+      // If it's a test message then send a differnt reply as it's probably
+      // from the range finder:
+      if ( strncmp(buf, "Test:", 5) == 0 ) {
+        Serial.println("Test message");
+        // Send a reply
+        char data[32];
+        memcpy(data, "Got: ", 5 );
+        memcpy(data + 5, buf + 5, sizeof(data) - 5);
+        data[10] = ':';
+        data[11] = ' ';
+        dtostrf( rssi, 5, 1, data+12);
+        rf95.send(data, sizeof(data));
+        rf95.waitPacketSent();
+        Serial.print("Sent a reply to test:");
+        Serial.println(data);
 
-      // Send the data to the D1 which will generate an Email
-      send_string( buf );
+      } else {
 
+        // Send a reply
+        uint8_t data[] = "OK";
+        rf95.send(data, sizeof(data));
+        rf95.waitPacketSent();
+        Serial.println("Sent a reply");
+
+        // Send the data to the Wemos D1 which will generate an Email
+        send_string( buf );
+      }
 
 
     } else {
